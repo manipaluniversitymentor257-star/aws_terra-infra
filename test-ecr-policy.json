@@ -1,0 +1,1 @@
+{"Version":"2012-10-17","Statement":[{"Effect":"Allow","Action":"ecr:BatchGetImage","Resource":"arn:aws:ecr:ap-south-1:604175034103:repository/aws-terra-infra-sudoku"}]}

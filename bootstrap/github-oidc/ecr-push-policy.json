@@ -1,1 +1,34 @@
-{"Version":"2012-10-17","Statement":[{"Sid":"ECRAuthorization","Effect":"Allow","Action":"ecr:GetAuthorizationToken","Resource":"*"},{"Sid":"PushImagesToProjectRepository","Effect":"Allow","Action":["ecr:BatchCheckLayerAvailability","ecr:CompleteLayerUpload","ecr:InitiateLayerUpload","ecr:PutImage","ecr:UploadLayerPart"],"Resource":"arn:aws:ecr:ap-south-1:604175034103:repository/aws-terra-infra-sudoku"},{"Sid":"ReadProjectRepository","Effect":"Allow","Action":["ecr:DescribeRepositories","ecr:ListTagsForResource"],"Resource":"arn:aws:ecr:ap-south-1:604175034103:repository/aws-terra-infra-sudoku"}]}
+
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "ECRAuthorization",
+      "Effect": "Allow",
+      "Action": "ecr:GetAuthorizationToken",
+      "Resource": "*"
+    },
+    {
+      "Sid": "PushImagesToProjectRepository",
+      "Effect": "Allow",
+      "Action": [
+        "ecr:BatchCheckLayerAvailability",
+        "ecr:BatchGetImage",
+        "ecr:CompleteLayerUpload",
+        "ecr:InitiateLayerUpload",
+        "ecr:PutImage",
+        "ecr:UploadLayerPart"
+      ],
+      "Resource": "arn:aws:ecr:ap-south-1:604175034103:repository/aws-terra-infra-sudoku"
+    },
+    {
+      "Sid": "ReadProjectRepository",
+      "Effect": "Allow",
+      "Action": [
+        "ecr:DescribeRepositories",
+        "ecr:ListTagsForResource"
+      ],
+      "Resource": "arn:aws:ecr:ap-south-1:604175034103:repository/aws-terra-infra-sudoku"
+    }
+  ]
+}

@@ -100,41 +100,51 @@ jobs:
       - name: Terraform Apply
         run: terraform apply -input=false -auto-approve tfplan
 
+      
       - name: Wait for Auto Scaling Instance Refresh
         run: |
+          set -euo pipefail
+
           ASG=$(terraform output -raw autoscaling_group_name)
 
           for i in {1..90}; do
-            REFRESH_ID=$(aws autoscaling describe-instance-refreshes \
+            RESULT=$(aws autoscaling describe-instance-refreshes \
               --auto-scaling-group-name "$ASG" \
               --max-records 1 \
-              --query "InstanceRefreshes[0].InstanceRefreshId" \
+              --query "InstanceRefreshes[0].[InstanceRefreshId,Status]" \
               --output text)
 
-            STATUS=$(aws autoscaling describe-instance-refreshes \
-              --auto-scaling-group-name "$ASG" \
-              --max-records 1 \
-              --query "InstanceRefreshes[0].Status" \
-              --output text)
+            REFRESH_ID=$(echo "$RESULT" | awk '{print $1}')
+            STATUS=$(echo "$RESULT" | awk '{print $2}')
 
-            echo "Refresh ID: $REFRESH_ID"
-            echo "Instance refresh status: $STATUS"
+            echo "Previous refresh: $PREVIOUS_REFRESH_ID"
+            echo "Current refresh: $REFRESH_ID"
+            echo "Status: $STATUS"
+
+            if [[ "$REFRESH_ID" == "$PREVIOUS_REFRESH_ID" && "$STATUS" == "Successful" ]]; then
+              echo "Previously completed refresh detected. Continuing deployment verification."
+              exit 0
+            fi
 
             if [[ "$REFRESH_ID" != "$PREVIOUS_REFRESH_ID" ]]; then
-              if [ "$STATUS" = "Successful" ]; then
-                echo "New instance refresh completed successfully."
-                exit 0
-              elif [[ "$STATUS" == "Failed" || "$STATUS" == "Cancelled" || "$STATUS" == "RollbackSuccessful" || "$STATUS" == "RollbackFailed" ]]; then
-                echo "Instance refresh did not complete successfully."
-                exit 1
-              fi
+              case "$STATUS" in
+                Successful)
+                  echo "New instance refresh completed successfully."
+                  exit 0
+                  ;;
+                Failed|Cancelled|RollbackSuccessful|RollbackFailed)
+                  echo "Instance refresh failed or was rolled back."
+                  exit 1
+                  ;;
+              esac
             fi
 
             sleep 20
           done
 
-          echo "Timed out waiting for a new instance refresh."
+          echo "Timed out waiting for instance refresh."
           exit 1
+
 
       - name: Verify ALB Target Health
         run: |
