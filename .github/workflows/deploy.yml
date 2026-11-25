@@ -30,55 +30,6 @@ jobs:
       - name: Checkout source code
         uses: actions/checkout@v4
 
-      # TEMPORARY: Diagnose GitHub OIDC token claims
-      - name: Debug GitHub OIDC Claims
-        env:
-          AUDIENCE: sts.amazonaws.com
-        run: |
-          set -euo pipefail
-
-          TOKEN_JSON=$(curl --fail --silent --show-error \
-            -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
-            "${ACTIONS_ID_TOKEN_REQUEST_URL}&audience=${AUDIENCE}")
-
-          ID_TOKEN=$(echo "$TOKEN_JSON" | jq -er '.value')
-
-          export OIDC_TOKEN="$ID_TOKEN"
-
-          python3 - <<'PY'
-          import os
-          import json
-          import base64
-
-          token = os.environ["OIDC_TOKEN"]
-          payload = token.split(".")[1]
-
-          payload += "=" * (-len(payload) % 4)
-
-          claims = json.loads(
-              base64.urlsafe_b64decode(payload)
-          )
-
-          required_claims = [
-              "iss",
-              "aud",
-              "sub",
-              "repository",
-              "repository_id",
-              "repository_owner",
-              "repository_owner_id",
-              "ref",
-              "event_name"
-          ]
-
-          print(json.dumps(
-              {key: claims.get(key) for key in required_claims},
-              indent=2
-          ))
-          PY
-
-          unset ID_TOKEN TOKEN_JSON OIDC_TOKEN
-
       - name: Configure AWS credentials using OIDC
         uses: aws-actions/configure-aws-credentials@v4
         with:
@@ -95,8 +46,27 @@ jobs:
           REGISTRY: ${{ steps.ecr-login.outputs.registry }}
           IMAGE_TAG: ${{ github.sha }}
         run: |
-          docker build -t $REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG ./app
-          docker push $REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+          set -euo pipefail
+
+          IMAGE="$REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
+
+          echo "Building Docker image: $IMAGE"
+
+          docker build -t "$IMAGE" ./app
+
+          echo "Checking ECR registry connectivity..."
+
+          curl --connect-timeout 10 \
+            --max-time 20 \
+            --silent \
+            --show-error \
+            --output /dev/null \
+            --write-out "ECR HTTP status: %{http_code}\n" \
+            "https://$REGISTRY/v2/"
+
+          echo "Starting Docker push with debug logging..."
+
+          timeout 10m docker --debug push "$IMAGE"
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
