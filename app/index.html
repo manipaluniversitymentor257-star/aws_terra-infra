@@ -1,0 +1,59 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sudoku | Brain Games</title>
+
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+    <div class="app-container">
+
+        <header class="header">
+            <h1>Sudoku</h1>
+            <p>Take a break. Challenge your mind.</p>
+        </header>
+
+        <main class="game-container">
+
+            <div class="game-info">
+                <div>
+                    <span>Time</span>
+                    <h3 id="timer">00:00</h3>
+                </div>
+
+                <div>
+                    <span>Mistakes</span>
+                    <h3 id="mistakes">0 / 3</h3>
+                </div>
+            </div>
+
+            <div id="sudoku-board" class="sudoku-board">
+                <!-- Sudoku cells will be generated using JavaScript -->
+            </div>
+
+            <div class="number-pad" id="number-pad">
+                <!-- Number buttons will be generated using JavaScript -->
+            </div>
+
+            <div class="game-actions">
+                <button id="new-game">New Game</button>
+                <button id="erase">Erase</button>
+            </div>
+
+        </main>
+
+        <footer>
+            <p>Made for curious minds.</p>
+        </footer>
+
+    </div>
+
+    <script src="script.js"></script>
+
+</body>
+</html>

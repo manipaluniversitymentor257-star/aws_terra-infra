@@ -1,0 +1,164 @@
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: Arial, sans-serif;
+    background: #f4f6f8;
+    color: #263238;
+    min-height: 100vh;
+}
+
+.app-container {
+    max-width: 650px;
+    margin: 40px auto;
+    padding: 20px;
+}
+
+.header {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.header h1 {
+    font-size: 36px;
+    color: #263238;
+    margin-bottom: 8px;
+}
+
+.header p {
+    color: #78909c;
+    font-size: 15px;
+}
+
+.game-container {
+    background: #ffffff;
+    padding: 25px;
+    border-radius: 16px;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.06);
+}
+
+.game-info {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 20px;
+}
+
+.game-info span {
+    font-size: 13px;
+    color: #78909c;
+}
+
+.game-info h3 {
+    margin-top: 5px;
+    font-size: 20px;
+}
+
+.sudoku-board {
+    display: grid;
+    grid-template-columns: repeat(9, 1fr);
+    border: 2px solid #455a64;
+    width: 100%;
+    aspect-ratio: 1 / 1;
+}
+
+.cell {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border: 1px solid #cfd8dc;
+    font-size: clamp(14px, 3vw, 22px);
+    cursor: pointer;
+    background: #ffffff;
+}
+
+.cell:nth-child(3n) {
+    border-right: 2px solid #455a64;
+}
+
+.cell:nth-child(9n) {
+    border-right: none;
+}
+
+.cell:nth-child(n+19):nth-child(-n+27),
+.cell:nth-child(n+46):nth-child(-n+54) {
+    border-bottom: 2px solid #455a64;
+}
+
+.cell.selected {
+    background: #dbeafe;
+}
+
+.cell.fixed {
+    font-weight: bold;
+    color: #263238;
+    background: #f1f5f9;
+}
+
+.cell.wrong {
+    color: #dc2626;
+    background: #fee2e2;
+}
+
+.number-pad {
+    display: grid;
+    grid-template-columns: repeat(9, 1fr);
+    gap: 6px;
+    margin-top: 20px;
+}
+
+.number-pad button,
+.game-actions button {
+    border: none;
+    border-radius: 8px;
+    padding: 12px 5px;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+.number-pad button {
+    background: #e3f2fd;
+    color: #1565c0;
+    font-weight: bold;
+}
+
+.number-pad button:hover {
+    background: #bbdefb;
+}
+
+.game-actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 20px;
+}
+
+.game-actions button {
+    flex: 1;
+    background: #263238;
+    color: #ffffff;
+}
+
+.game-actions button:hover {
+    background: #455a64;
+}
+
+footer {
+    text-align: center;
+    margin-top: 25px;
+    color: #90a4ae;
+    font-size: 13px;
+}
+
+@media (max-width: 480px) {
+    .app-container {
+        margin: 15px auto;
+        padding: 10px;
+    }
+
+    .game-container {
+        padding: 15px;
+    }
+}

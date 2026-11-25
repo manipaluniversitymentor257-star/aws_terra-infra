@@ -1,0 +1,141 @@
+
+name: Sudoku Application CI/CD
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+
+concurrency:
+  group: sudoku-production-deployment
+  cancel-in-progress: false
+
+env:
+  AWS_REGION: ap-south-1
+  ECR_REPOSITORY: aws-terra-infra-sudoku
+  TF_IN_AUTOMATION: true
+
+jobs:
+  build-and-deploy:
+    name: Build, Push and Deploy
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials using OIDC
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::604175034103:role/aws-terra-infra-github-actions-role
+          aws-region: ${{ env.AWS_REGION }}
+          role-session-name: GitHubActionsDeployment
+
+      - name: Login to Amazon ECR
+        id: ecr-login
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build and push Docker image
+        env:
+          REGISTRY: ${{ steps.ecr-login.outputs.registry }}
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          docker build -t $REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG ./app
+          docker push $REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.16.6
+
+      - name: Terraform Init
+        run: terraform init -input=false
+
+      - name: Terraform Plan
+        run: |
+          terraform plan \
+            -input=false \
+            -lock-timeout=5m \
+            -var="image_tag=${GITHUB_SHA}" \
+            -out=tfplan
+
+      - name: Capture Previous Instance Refresh
+        run: |
+          ASG=$(terraform output -raw autoscaling_group_name)
+
+          REFRESH_ID=$(aws autoscaling describe-instance-refreshes \
+            --auto-scaling-group-name "$ASG" \
+            --max-records 1 \
+            --query "InstanceRefreshes[0].InstanceRefreshId" \
+            --output text)
+
+          echo "PREVIOUS_REFRESH_ID=$REFRESH_ID" >> "$GITHUB_ENV"
+          echo "Previous refresh ID: $REFRESH_ID"
+
+      - name: Terraform Apply
+        run: terraform apply -input=false -auto-approve tfplan
+
+      - name: Wait for Auto Scaling Instance Refresh
+        run: |
+          ASG=$(terraform output -raw autoscaling_group_name)
+
+          for i in {1..90}; do
+            REFRESH_ID=$(aws autoscaling describe-instance-refreshes \
+              --auto-scaling-group-name "$ASG" \
+              --max-records 1 \
+              --query "InstanceRefreshes[0].InstanceRefreshId" \
+              --output text)
+
+            STATUS=$(aws autoscaling describe-instance-refreshes \
+              --auto-scaling-group-name "$ASG" \
+              --max-records 1 \
+              --query "InstanceRefreshes[0].Status" \
+              --output text)
+
+            echo "Refresh ID: $REFRESH_ID"
+            echo "Instance refresh status: $STATUS"
+
+            if [[ "$REFRESH_ID" != "$PREVIOUS_REFRESH_ID" ]]; then
+              if [ "$STATUS" = "Successful" ]; then
+                echo "New instance refresh completed successfully."
+                exit 0
+              elif [[ "$STATUS" == "Failed" || "$STATUS" == "Cancelled" || "$STATUS" == "RollbackSuccessful" || "$STATUS" == "RollbackFailed" ]]; then
+                echo "Instance refresh did not complete successfully."
+                exit 1
+              fi
+            fi
+
+            sleep 20
+          done
+
+          echo "Timed out waiting for a new instance refresh."
+          exit 1
+
+      - name: Verify ALB Target Health
+        run: |
+          TG_ARN=$(terraform output -raw target_group_arn)
+
+          for i in {1..40}; do
+            HEALTHY=$(aws elbv2 describe-target-health \
+              --target-group-arn "$TG_ARN" \
+              --query "length(TargetHealthDescriptions[?TargetHealth.State=='healthy'])" \
+              --output text)
+
+            echo "Healthy ALB targets: $HEALTHY"
+
+            if [ "$HEALTHY" -ge 2 ]; then
+              echo "Deployment successful. Both application instances are healthy."
+              exit 0
+            fi
+
+            sleep 15
+          done
+
+          echo "ALB target health verification failed."
+          exit 1
