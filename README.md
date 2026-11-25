@@ -1,14 +1,14 @@
-AWS Terraform Infrastructure – Sudoku Application
+# AWS Terraform Infrastructure – Sudoku Application
 
-A production-style AWS infrastructure project that automates the deployment of a Sudoku web application using Terraform, Docker, Amazon ECR, GitHub Actions and AWS services.
+A production-style AWS infrastructure project that automates the deployment of a Sudoku web application using **Terraform, Docker, Amazon ECR, GitHub Actions and AWS services**.
 
 The project demonstrates Infrastructure as Code (IaC), automated CI/CD, secure AWS authentication using GitHub OIDC, high availability and application health verification.
 
-Architecture Overview
+## Architecture Overview
 
-The application is deployed on AWS in the ap-south-1 region across two Availability Zones.
+The application is deployed on AWS in the `ap-south-1` region across two Availability Zones.
 
-Infrastructure Components
+### Infrastructure Components
 
 | Component | Purpose |
 |---|---|
@@ -24,9 +24,9 @@ Infrastructure Components
 | IAM Roles | Provides controlled AWS permissions |
 | NAT Gateway | Enables outbound internet access from private subnets |
 
-High-Level Architecture
+### High-Level Architecture
 
-
+```mermaid
 flowchart TD
     A[Developer] --> B[GitHub Repository]
     B --> C[GitHub Actions CI/CD]
@@ -40,29 +40,29 @@ flowchart TD
     I --> J[Application Load Balancer]
     J --> K[Users]
     I --> L[Amazon RDS MySQL]
+```
 
+## Technology Stack
 
-Technology Stack
+- **Cloud:** Amazon Web Services (AWS)
+- **Infrastructure as Code:** Terraform
+- **Containerization:** Docker
+- **Container Registry:** Amazon ECR
+- **CI/CD:** GitHub Actions
+- **Authentication:** AWS IAM and GitHub OIDC
+- **Compute:** Amazon EC2 and Auto Scaling
+- **Networking:** VPC, Subnets, Route Tables, NAT Gateway
+- **Load Balancing:** Application Load Balancer
+- **Database:** Amazon RDS MySQL
+- **Version Control:** Git and GitHub
 
-- Cloud: Amazon Web Services (AWS)
-- Infrastructure as Code: Terraform
-- Containerization: Docker
-- Container Registry: Amazon ECR
-- CI/CD: GitHub Actions
-- Authentication: AWS IAM and GitHub OIDC
-- Compute: Amazon EC2 and Auto Scaling
-- Networking: VPC, Subnets, Route Tables, NAT Gateway
-- Load Balancing: Application Load Balancer
-- Database: Amazon RDS MySQL
-- Version Control: Git and GitHub
-
-CI/CD Pipeline
+## CI/CD Pipeline
 
 The project uses GitHub Actions to automate the application deployment process.
 
-Deployment Workflow
+### Deployment Workflow
 
-1. Developer pushes changes to the main branch.
+1. Developer pushes changes to the `main` branch.
 2. GitHub Actions starts the CI/CD workflow.
 3. AWS authentication is established using GitHub OIDC.
 4. Docker builds the application image.
@@ -75,7 +75,7 @@ Deployment Workflow
 
 The workflow completes only after the required application targets become healthy.
 
-Security Implementation
+## Security Implementation
 
 - GitHub OIDC authentication instead of long-lived AWS access keys.
 - IAM roles and policies for controlled access.
@@ -85,9 +85,9 @@ Security Implementation
 - Security groups to control network traffic.
 - Terraform remote state stored separately from the application infrastructure.
 
-Terraform Project Structure
+## Terraform Project Structure
 
-
+```text
 aws_terra-infra/
 │
 ├── .github/
@@ -116,11 +116,11 @@ aws_terra-infra/
 ├── terraform.tfvars
 ├── .gitignore
 └── README.md
+```
 
+## Deployment Instructions
 
-Deployment Instructions
-
-Prerequisites
+### Prerequisites
 
 - AWS account
 - Terraform CLI
@@ -129,47 +129,56 @@ Prerequisites
 - Git
 - GitHub repository
 
- 1. Clone the repository
+### 1. Clone the repository
 
+```bash
 git clone https://github.com/manipaluniversitymentor257-star/aws_terra-infra.git
 
 cd aws_terra-infra
+```
 
- 2. Configure AWS authentication
+### 2. Configure AWS authentication
 
 Configure the GitHub OIDC identity provider, IAM role and required permissions before running the GitHub Actions workflow.
 
 Do not commit AWS access keys, secret keys or sensitive configuration files.
 
- 3. Initialize Terraform
+### 3. Initialize Terraform
 
+```bash
 terraform init
+```
 
+### 4. Validate the configuration
 
- 4. Validate the configuration
-
-
+```bash
 terraform fmt -recursive
 terraform validate
+```
 
+### 5. Review the infrastructure plan
 
- 5. Review the infrastructure plan
-
+```bash
 terraform plan
+```
 
- 6. Deploy the infrastructure
+### 6. Deploy the infrastructure
 
+```bash
 terraform apply
+```
 
- 7. Access the application
+### 7. Access the application
 
 Retrieve the Application Load Balancer DNS name:
 
+```bash
 terraform output -raw alb_dns_name
+```
 
 Open the resulting DNS address in a browser.
 
- Deployment Verification
+## Deployment Verification
 
 The successful deployment was verified through:
 
@@ -180,17 +189,19 @@ The successful deployment was verified through:
 - Two healthy targets in the Application Load Balancer target group.
 - Successful application access through the ALB DNS endpoint.
 
-Infrastructure Cleanup
+## Infrastructure Cleanup
 
 To remove Terraform-managed AWS infrastructure:
 
+```bash
 terraform destroy
+```
 
-Important: This removes the resources managed by this Terraform configuration, including the RDS database, ECR repository and application infrastructure.
+**Important:** This removes the resources managed by this Terraform configuration, including the RDS database, ECR repository and application infrastructure.
 
 Back up any required database data and preserve the separately managed Terraform state backend before destroying the infrastructure.
 
-Key Learning Outcomes
+## Key Learning Outcomes
 
 - Designing AWS infrastructure across multiple Availability Zones.
 - Building reusable Terraform modules.
@@ -202,8 +213,8 @@ Key Learning Outcomes
 - Implementing load balancing and health checks.
 - Troubleshooting real-world IAM, Docker and deployment issues.
 
+---
 
+**Project:** AWS Terraform Infrastructure – Sudoku Application
 
-Project: AWS Terraform Infrastructure – Sudoku Application
-
-Repository: [aws_terra-infra](https://github.com/manipaluniversitymentor257-star/aws_terra-infra)
+**Repository:** [aws_terra-infra](https://github.com/manipaluniversitymentor257-star/aws_terra-infra)
